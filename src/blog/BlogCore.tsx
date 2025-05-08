@@ -1080,10 +1080,10 @@ export const Sitemap: React.FC<{
 };
 
 /**
- * BlogPost Component
+ * BlogPostComponent Component
  * Displays a single blog post
  */
-export const BlogPost: React.FC = () => {
+export const BlogPostComponent: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
