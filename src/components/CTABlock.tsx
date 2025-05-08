@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import siteConfig from '../config/site';
+import blogConfig from '../config/blog.config';
+import themeConfig from '../config/theme.config';
 
 interface CTABlockProps {
   variant?: 'sidebar' | 'footer';
@@ -18,39 +19,49 @@ const CTABlock: React.FC<CTABlockProps> = ({
   className = '',
   title,
   description,
-  buttonText = 'Visit Homepage',
+  buttonText,
   secondaryButtonText,
   icon
 }) => {
-  // Default content that can be customized in each project
-  const defaultTitle = variant === 'sidebar' ? 'About This Blog' : 'Enjoyed this article?';
-  const defaultDescription = variant === 'sidebar' 
-    ? 'Welcome to our blog where we share valuable content and insights. Explore more articles or visit our main site.'
-    : 'Explore more of our content or check out our main site for more resources.';
+  // Get configuration based on variant
+  const ctaConfig = variant === 'sidebar' 
+    ? blogConfig.ui.cta.sidebar 
+    : blogConfig.ui.cta.mainPage;
+  
+  // Use provided values or defaults from config
+  const displayTitle = title || ctaConfig.title;
+  const displayDescription = description || ctaConfig.description;
+  const displayButtonText = buttonText || ctaConfig.primaryButton.text;
+  const buttonUrl = ctaConfig.primaryButton.url;
+  
+  const showSecondaryButton = secondaryButtonText || ctaConfig.secondaryButton;
+  const displaySecondaryButtonText = secondaryButtonText || 
+    (ctaConfig.secondaryButton ? ctaConfig.secondaryButton.text : '');
+  const secondaryButtonUrl = ctaConfig.secondaryButton ? ctaConfig.secondaryButton.url : '/blog/';
   
   return (
-    <div className={`bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg shadow-sm p-6 ${className}`}>
+    <div className={`bg-gradient-to-r ${themeConfig.colors.primary.gradient} rounded-lg shadow-sm p-6 ${className}`}>
       <div className="flex flex-col md:flex-row md:items-center">
         <div className="flex-grow">
-          <h3 className={`font-bold text-gray-900 mb-2 ${variant === 'sidebar' ? 'text-lg' : 'text-xl'}`}>
-            {title || defaultTitle}
+          <h3 className={`font-bold ${themeConfig.colors.secondary.textDark} mb-2 ${variant === 'sidebar' ? 'text-lg' : 'text-xl'}`}>
+            {displayTitle}
           </h3>
-          <p className={`text-gray-600 mb-4 ${variant === 'sidebar' ? 'text-sm' : 'text-base'}`}>
-            {description || defaultDescription}
+          <p className={`${themeConfig.colors.secondary.text} mb-4 ${variant === 'sidebar' ? 'text-sm' : 'text-base'}`}>
+            {displayDescription}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link 
-              to="/" 
-              className={`inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${variant === 'sidebar' ? 'w-full justify-center' : ''}`}
+              to={buttonUrl} 
+              className={`${themeConfig.components.button.primary} ${variant === 'sidebar' ? 'w-full justify-center' : ''} inline-flex items-center`}
             >
-              {buttonText} {!variant || variant === 'footer' ? <ArrowRight size={16} className="ml-2" /> : null}
+              {displayButtonText} {!variant || variant === 'footer' ? <ArrowRight size={16} className="ml-2" /> : null}
             </Link>
-            {secondaryButtonText && (
+            {showSecondaryButton && (
               <Link 
-                to="/blog/" 
-                className={`inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors ${variant === 'sidebar' ? 'w-full justify-center' : ''}`}
+                to={secondaryButtonUrl} 
+                className={`${themeConfig.components.button.secondary} ${variant === 'sidebar' ? 'w-full justify-center' : ''} inline-flex items-center`}
               >
-                {secondaryButtonText}
+                {displaySecondaryButtonText}
               </Link>
             )}
           </div>

@@ -1,6 +1,7 @@
 import { BlogPost } from '../types/blog';
 import { createSlug } from '../utils/slugUtils';
 import siteConfig from '../config/site';
+import blogConfig, { generateMetaDescription } from '../config/blog.config';
 import { extractFirstImage } from '../utils/imageUtils';
 
 // Use Vite's dynamic import for markdown files
@@ -10,6 +11,9 @@ const posts = import.meta.glob('/blog-content/**/*.md', {
   as: 'raw',
 });
 
+/**
+ * Extract front matter from markdown content
+ */
 function extractFrontMatter(content: string) {
   // Simple front matter parser that works in browser
   const frontMatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
@@ -34,23 +38,9 @@ function extractFrontMatter(content: string) {
   return { frontMatter, content: contentStr };
 }
 
-// Extract meta description from markdown content
-function extractMetaDescription(content: string): string {
-  // Remove markdown formatting and strip HTML tags
-  const plainText = content
-    .replace(/!\[.*?\]\(.*?\)/g, '') // Remove images
-    .replace(/\[.*?\]\(.*?\)/g, '$1') // Replace links with just the text
-    .replace(/[#*_~`]/g, '') // Remove markdown formatting characters
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/\n+/g, ' ') // Replace newlines with spaces
-    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-    .trim();
-  
-  // Get first 160 characters, cut at last space to avoid word breaks
-  const truncated = plainText.substring(0, 160);
-  return truncated.substring(0, truncated.lastIndexOf(' ')) + '...';
-}
-
+/**
+ * Process markdown content to handle YouTube embeds, images, etc.
+ */
 function processMarkdownContent(content: string): string {
   // First, process and isolate complete sentences that contain YouTube links
   // This uses a more careful approach to avoid mixing text with the embed tag
@@ -108,11 +98,17 @@ function processMarkdownContent(content: string): string {
   return processedContent;
 }
 
+/**
+ * Get YouTube thumbnail URL from video ID
+ */
 function getYoutubeThumbnailUrl(videoId: string): string {
   // Use maxresdefault for highest quality YouTube thumbnail
   return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 }
 
+/**
+ * Extract YouTube video ID from content
+ */
 function extractVideoId(content: string): string | null {
   // Look for YouTube URLs in the content
   const youtubeMatch = content.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
@@ -126,6 +122,18 @@ function extractVideoId(content: string): string | null {
   return youtubeMatch ? youtubeMatch[1] : null;
 }
 
+/**
+ * Extract title from markdown content
+ */
+function extractTitleFromMarkdown(content: string): string {
+  // Look for the first # heading
+  const titleMatch = content.match(/^#\s+(.+)$/m);
+  return titleMatch ? titleMatch[1].trim() : 'Untitled Post';
+}
+
+/**
+ * Get all blog posts
+ */
 export async function getAllPosts(): Promise<BlogPost[]> {
   try {
     return Object.entries(posts).map(([path, content]) => {
@@ -157,10 +165,10 @@ export async function getAllPosts(): Promise<BlogPost[]> {
       }
       
       // Get author from front matter or use default
-      const author = frontMatter.author || siteConfig.defaultAuthor;
+      const author = frontMatter.author || blogConfig.posts.defaultAuthor;
       
       // Use excerpt from front matter or generate meta description
-      const excerpt = frontMatter.excerpt || extractMetaDescription(processedContent);
+      const excerpt = frontMatter.excerpt || generateMetaDescription(processedContent);
       
       return {
         title,
@@ -178,24 +186,35 @@ export async function getAllPosts(): Promise<BlogPost[]> {
   }
 }
 
-// Helper function to get a post by slug
+/**
+ * Helper function to get a post by slug
+ */
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   const allPosts = await getAllPosts();
   return allPosts.find(post => post.slug === slug) || null;
 }
 
-// Helper to get all site URLs for sitemap
+/**
+ * Helper to get all site URLs for sitemap
+ */
 export async function getAllUrls() {
   const allPosts = await getAllPosts();
   
   // Base URLs for the site
-  const baseUrls = [
-    { path: '/', name: 'Home' },
-    { path: '/blog/', name: 'Blog' },
-    { path: '/about/', name: 'About Us' },
-    { path: '/contact/', name: 'Contact Us' },
-    { path: '/sitemap/', name: 'Sitemap' }
-  ];
+  const baseUrls = siteConfig.navigation.main.map(item => ({
+    path: item.path,
+    name: item.name
+  }));
+  
+  // Add any additional pages from footer navigation
+  siteConfig.navigation.footer.forEach(item => {
+    if (!baseUrls.some(u => u.path === item.path)) {
+      baseUrls.push({
+        path: item.path,
+        name: item.name
+      });
+    }
+  });
   
   // Blog post URLs
   const blogUrls = allPosts.map(post => ({
@@ -205,10 +224,4 @@ export async function getAllUrls() {
   }));
   
   return { baseUrls, blogUrls };
-}
-
-function extractTitleFromMarkdown(content: string): string {
-  // Look for the first # heading
-  const titleMatch = content.match(/^#\s+(.+)$/m);
-  return titleMatch ? titleMatch[1].trim() : 'Untitled Post';
 }

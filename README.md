@@ -12,6 +12,7 @@ A modern, customizable React blog with Markdown support, built with Vite, React,
 - **Image Handling**: Automatic featured image extraction from blog posts
 - **YouTube Embed Support**: Easily embed YouTube videos in your blog posts
 - **Zip File Support**: Upload multiple blog posts at once via zip files
+- **Highly Customizable**: All customization options in centralized config files
 
 ## Quick Start
 
@@ -29,16 +30,86 @@ npm run build
 npm run preview
 ```
 
+## Customization
+
+### Centralized Configuration
+
+All customization happens in just a few files in the `src/config` directory:
+
+1. **`site.ts`** - Site-wide settings like title, description, social links, etc.
+2. **`blog.config.ts`** - Blog-specific settings (posts per page, UI settings, etc.)
+3. **`theme.config.ts`** - Theme configuration (colors, typography, layout, components)
+
+### Site Configuration
+
+Edit `src/config/site.ts` to customize site-wide settings:
+
+```typescript
+const siteConfig = {
+  title: "Your Site Name",
+  description: "Your site description",
+  defaultAuthor: "Default Author Name",
+  domain: "yoursitename.com",
+  // Add more site-wide configuration as needed
+};
+```
+
+### Blog Configuration
+
+Edit `src/config/blog.config.ts` to customize how the blog works:
+
+```typescript
+const blogConfig = {
+  posts: {
+    postsPerPage: 30,
+    // Other post settings
+  },
+  ui: {
+    featuredImage: {
+      // Image settings
+    },
+    preview: {
+      // Preview settings
+    },
+    cta: {
+      // Call-to-action blocks
+    }
+  },
+  // Other blog settings
+};
+```
+
+### Theme Configuration
+
+Edit `src/config/theme.config.ts` to customize styles and theme:
+
+```typescript
+const themeConfig = {
+  colors: {
+    primary: {
+      main: 'bg-blue-600',
+      // Other color variants
+    },
+    // Other color settings
+  },
+  typography: {
+    // Typography settings
+  },
+  layout: {
+    // Layout settings
+  },
+  components: {
+    // Component styles
+  },
+};
+```
+
 ## Blog Content Structure
 
 Blog content can be added in two ways:
 
 1. **Individual markdown files** in the `blog-content` directory
 2. **Zip files** containing markdown files in the `blog-zips` directory
-
-When you run `npm run build`, the system will:
-1. Extract any zip files from `blog-zips` into the `blog-content` directory
-2. Include all markdown files in the build
 
 ### Creating Blog Posts
 
@@ -57,64 +128,15 @@ excerpt: A brief summary of the blog post that will appear in listings
 Your content goes here...
 ```
 
-### Markdown Features
+## Reusing Components in Other Projects
 
-The blog supports:
-- Standard Markdown syntax
-- YouTube embeds (`youtube:VIDEO_ID` or regular YouTube URLs)
-- Images (with automatic extraction for featured images)
-- Code blocks with syntax highlighting
-- Tables via GFM (GitHub Flavored Markdown)
+To reuse these components in other projects, you can:
 
-## Customization
+1. Copy the entire `/src/components`, `/src/utils`, `/src/types`, and `/src/config` directories
+2. Import the components as needed from these files
+3. Customize the configuration files in `/src/config` for your specific needs
 
-### Site Configuration
-
-Edit `src/config/site.ts` to customize site-wide settings:
-
-```typescript
-const siteConfig = {
-  title: "Your Site Name",
-  description: "Your site description",
-  defaultAuthor: "Default Author Name",
-  siteUrl: "https://yoursitename.com",
-  // Add more site-wide configuration as needed
-};
-```
-
-### Environment Variables
-
-Create a `.env` file based on `.env.example`:
-
-```
-VITE_SITE_URL=https://yoursitename.com
-```
-
-### Main Pages
-
-- **Home Page**: Edit `src/App.tsx` to customize the homepage content
-- **About Page**: Edit `src/pages/AboutPage.tsx`
-- **Contact Page**: Edit `src/pages/ContactPage.tsx`
-
-### Components
-
-The blog uses a modular component structure:
-
-- `src/components/BlogList.tsx`: Blog listing page
-- `src/components/BlogPost.tsx`: Individual blog post display
-- `src/components/BlogPreview.tsx`: Blog post previews for homepage
-- `src/components/SearchBar.tsx`: Search functionality
-- `src/components/Footer.tsx`: Site footer
-
-## Deployment
-
-The project is set up to work with Netlify out of the box. The build command in `package.json` automatically handles the extraction of blog content zip files before building the site.
-
-```
-npm run build
-```
-
-For other hosting providers, ensure they can run the build command as defined in the package.json file.
+This modular approach lets you quickly set up advanced blog functionality in any React project.
 
 ## License
 

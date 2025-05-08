@@ -31,18 +31,3 @@ export function extractFirstImage(content: string): string | null {
   // No image found
   return null;
 }
-
-/**
- * Returns a default featured image URL for blog posts without images
- * @returns A URL for a default blog image
- */
-export function getDefaultFeaturedImage(): string {
-  const defaultImages = [
-    'https://images.unsplash.com/photo-1487611459768-bd414656ea10?q=80&w=1920&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1920&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?q=80&w=1920&auto=format&fit=crop'
-  ];
-  
-  // Return a random image from the array
-  return defaultImages[Math.floor(Math.random() * defaultImages.length)];
-}

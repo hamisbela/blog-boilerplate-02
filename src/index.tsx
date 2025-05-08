@@ -12,14 +12,15 @@ export { default as CTABlock } from './components/CTABlock';
 
 // Export utility functions
 export { createSlug } from './utils/slugUtils';
-export { extractFirstImage, getDefaultFeaturedImage } from './utils/imageUtils';
+export { extractFirstImage } from './utils/imageUtils';
 
 // Export types
-export type { BlogPost } from './types/blog';
-export type { SitemapUrl } from './types/blog';
+export type { BlogPost, SitemapUrl, BlogThemeConfig } from './types/blog';
 
 // Export data functions
 export { getAllPosts, getPostBySlug, getAllUrls } from './data/posts';
 
-// Export site config
-export { default as siteConfig } from './config/site';
+// Export configuration
+export { default as siteConfig, getSiteUrl } from './config/site';
+export { default as blogConfig, getDefaultFeaturedImage, generateMetaDescription } from './config/blog.config';
+export { default as themeConfig, getButtonClass, getContainerClass } from './config/theme.config';

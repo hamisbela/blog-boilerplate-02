@@ -9,13 +9,15 @@ import ScrollToTop from './components/ScrollToTop';
 import Sitemap from './components/Sitemap';
 import SearchBar from './components/SearchBar';
 import siteConfig, { getSiteUrl } from './config/site';
+import blogConfig from './config/blog.config';
+import themeConfig from './config/theme.config';
 
 function App() {
   return (
     <Router>
       <HelmetProvider>
         <ScrollToTop />
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className={`min-h-screen ${themeConfig.colors.secondary.light} flex flex-col`}>
           <Helmet>
             <title>{siteConfig.title} - {siteConfig.description}</title>
             <meta name="description" content={siteConfig.description} />
@@ -26,11 +28,11 @@ function App() {
           </Helmet>
 
           <nav className="bg-white shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className={`${themeConfig.layout.container.wide} mx-auto px-4 sm:px-6 lg:px-8`}>
               <div className="flex justify-between h-16">
                 <div className="flex">
                   <Link to="/" className="flex items-center">
-                    <BookOpen className="h-8 w-8 text-blue-600 mr-2" />
+                    <BookOpen className={`h-8 w-8 ${themeConfig.colors.primary.text} mr-2`} />
                     <span className="font-bold text-xl">{siteConfig.title}</span>
                   </Link>
                 </div>
@@ -38,12 +40,15 @@ function App() {
                   <div className="hidden md:block mr-4">
                     <SearchBar compact={true} />
                   </div>
-                  <Link 
-                    to="/blog/" 
-                    className="ml-4 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    Blog
-                  </Link>
+                  {siteConfig.navigation.main.map((item, index) => (
+                    <Link 
+                      key={index}
+                      to={item.path} 
+                      className="ml-4 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
@@ -51,25 +56,29 @@ function App() {
 
           <main className="flex-grow">
             <Routes>
-              <Route path="/blog/" element={<BlogList />} />
-              <Route path="/sitemap/" element={<Sitemap />} />
+              <Route path={blogConfig.routes.blog} element={<BlogList />} />
+              <Route path={blogConfig.routes.sitemap} element={<Sitemap />} />
               <Route path="/" element={
-                <div className="py-12 px-4 sm:px-6 lg:px-8">
-                  <div className="max-w-4xl mx-auto">
+                <div className={themeConfig.layout.spacing.section}>
+                  <div className={`${themeConfig.layout.container.regular} mx-auto`}>
                     {/* 
                       Home page is empty by default - customize this in your specific project 
                       You can add your own components and content here.
                     */}
                     <div className="mb-12 text-center">
-                      <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to {siteConfig.title}</h1>
-                      <p className="text-xl text-gray-600">
+                      <h1 className={`${themeConfig.typography.headings.h1} ${themeConfig.colors.secondary.textDark} mb-4`}>
+                        Welcome to {siteConfig.title}
+                      </h1>
+                      <p className={`text-xl ${themeConfig.colors.secondary.text}`}>
                         {siteConfig.description}
                       </p>
                     </div>
                     
                     {/* Blog Preview - shows latest posts */}
                     <div className="mt-16">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-6">Latest Blog Posts</h2>
+                      <h2 className={`${themeConfig.typography.headings.h2} ${themeConfig.colors.secondary.textDark} mb-6`}>
+                        Latest Blog Posts
+                      </h2>
                       <BlogPreview />
                     </div>
                   </div>
@@ -80,11 +89,10 @@ function App() {
             </Routes>
           </main>
           
-          {/* Footer removed as requested */}
-          <div className="bg-gray-100 py-6 border-t border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-              <p className="text-center text-gray-500 text-sm">
-                &copy; {new Date().getFullYear()} {siteConfig.title}. All rights reserved.
+          <div className={`${themeConfig.colors.secondary.main} py-6 border-t ${themeConfig.colors.secondary.borderLight}`}>
+            <div className={`${themeConfig.layout.container.wide} mx-auto px-4 sm:px-6`}>
+              <p className={`text-center ${themeConfig.colors.secondary.textLight} text-sm`}>
+                {siteConfig.legal.copyright}
               </p>
             </div>
           </div>
@@ -101,13 +109,13 @@ function BlogPostWrapper() {
   const path = location.pathname;
   
   // Exclude specific paths that have their own routes
-  if (path === '/blog/' || path === '/sitemap/' || path === '/sitemap.xml/') {
+  if (path === blogConfig.routes.blog || path === blogConfig.routes.sitemap || path === '/sitemap.xml/') {
     return <Navigate to={path} replace />;
   }
   
   // If there's a page parameter, likely it's a request for a paginated blog route
   if (searchParams.has('page') && path === '/') {
-    return <Navigate to={`/blog/?${searchParams.toString()}`} replace />;
+    return <Navigate to={`${blogConfig.routes.blog}?${searchParams.toString()}`} replace />;
   }
   
   return <BlogPost />;

@@ -6,10 +6,13 @@ import { BlogPost } from '../types/blog';
 import { PenLine, Calendar, User, Filter } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import siteConfig, { getSiteUrl } from '../config/site';
+import blogConfig from '../config/blog.config';
+import themeConfig from '../config/theme.config';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
 
-const POSTS_PER_PAGE = 30;
+// Use configured posts per page
+const POSTS_PER_PAGE = blogConfig.posts.postsPerPage;
 
 const BlogList: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -88,7 +91,7 @@ const BlogList: React.FC = () => {
 
   // Create the base URL for pagination with search parameters
   const getPaginationBaseUrl = () => {
-    let baseUrl = '/blog/';
+    let baseUrl = blogConfig.routes.blog;
     if (searchQuery) {
       baseUrl += `?search=${encodeURIComponent(searchQuery)}`;
     }
@@ -107,12 +110,12 @@ const BlogList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
+      <div className={`${themeConfig.layout.container.wide} mx-auto ${themeConfig.layout.spacing.section}`}>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm">
+              <div key={i} className={themeConfig.components.card}>
                 <div className="h-48 bg-gray-200 rounded-t-lg"></div>
                 <div className="p-6">
                   <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -129,7 +132,7 @@ const BlogList: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
+      <div className={`${themeConfig.layout.container.wide} mx-auto ${themeConfig.layout.spacing.section}`}>
         <Helmet>
           <title>Error - {siteConfig.title}</title>
           <meta name="robots" content="noindex, follow" />
@@ -143,34 +146,42 @@ const BlogList: React.FC = () => {
 
   if (filteredPosts.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
+      <div className={`${themeConfig.layout.container.wide} mx-auto ${themeConfig.layout.spacing.section}`}>
         <Helmet>
           <title>{getPageTitle()}</title>
           <meta name="robots" content={searchQuery ? 'noindex, follow' : 'index, follow'} />
         </Helmet>
         
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">Blog Posts</h1>
+          <h1 className={`${themeConfig.typography.headings.h1} ${themeConfig.colors.secondary.textDark} mb-4 md:mb-0`}>
+            Blog Posts
+          </h1>
           <SearchBar containerClassName="max-w-md w-full" />
         </div>
         
         {searchQuery ? (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center mb-8">
             <Filter className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-            <p className="text-gray-700 font-medium">No posts found for "{searchQuery}"</p>
-            <p className="text-gray-600 mt-2">Try a different search term or browse all posts</p>
+            <p className={`${themeConfig.colors.secondary.textDark} font-medium`}>
+              No posts found for "{searchQuery}"
+            </p>
+            <p className={`${themeConfig.colors.secondary.text} mt-2`}>
+              Try a different search term or browse all posts
+            </p>
             <Link 
-              to="/blog/" 
-              className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              to={blogConfig.routes.blog} 
+              className={themeConfig.components.button.primary + " inline-block mt-4"}
             >
               View All Posts
             </Link>
           </div>
         ) : (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-            <PenLine className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No blog posts available yet.</p>
-            <p className="text-gray-500 text-sm mt-2">Check back soon for new content!</p>
+          <div className={`${themeConfig.colors.secondary.light} border ${themeConfig.colors.secondary.borderLight} rounded-lg p-8 text-center`}>
+            <PenLine className={`h-12 w-12 ${themeConfig.colors.secondary.textLight} mx-auto mb-4`} />
+            <p className={themeConfig.colors.secondary.text}>No blog posts available yet.</p>
+            <p className={`${themeConfig.colors.secondary.textLight} text-sm mt-2`}>
+              Check back soon for new content!
+            </p>
           </div>
         )}
       </div>
@@ -178,14 +189,14 @@ const BlogList: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
+    <div className={`${themeConfig.layout.container.wide} mx-auto ${themeConfig.layout.spacing.section}`}>
       <Helmet>
         <title>{getPageTitle()}</title>
         <meta name="robots" content={searchQuery ? 'noindex, follow' : 'index, follow'} />
       </Helmet>
       
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">
+        <h1 className={`${themeConfig.typography.headings.h1} ${themeConfig.colors.secondary.textDark} mb-4 md:mb-0`}>
           {searchQuery ? `Search: ${searchQuery}` : 'Blog Posts'}
         </h1>
         <SearchBar containerClassName="max-w-md w-full" />
@@ -193,12 +204,12 @@ const BlogList: React.FC = () => {
       
       {searchQuery && (
         <div className="mb-6 flex items-center justify-between">
-          <p className="text-gray-600">
+          <p className={themeConfig.colors.secondary.text}>
             Found <span className="font-medium">{filteredPosts.length}</span> posts matching your search
           </p>
           <Link 
-            to="/blog/" 
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            to={blogConfig.routes.blog} 
+            className={`${themeConfig.colors.primary.text} ${themeConfig.colors.primary.textHover} font-medium`}
           >
             Clear filters
           </Link>
@@ -211,14 +222,14 @@ const BlogList: React.FC = () => {
           const isYoutubeThumb = post.featuredImage?.includes('img.youtube.com');
           
           return (
-            <article key={post.slug} className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <article key={post.slug} className={`${themeConfig.components.card} overflow-hidden`}>
               <Link to={`/${post.slug}/`} className="block hover:no-underline">
                 <div 
-                  className={`${isYoutubeThumb ? 'youtube-thumbnail' : 'h-48'} bg-cover bg-center relative`}
+                  className={`${isYoutubeThumb ? 'youtube-thumbnail' : blogConfig.ui.featuredImage.height.blogList} bg-cover bg-center relative`}
                   style={{ 
                     backgroundImage: post.featuredImage 
                       ? `url(${post.featuredImage})` 
-                      : 'url(https://images.unsplash.com/photo-1487611459768-bd414656ea10?q=80&w=1920&auto=format&fit=crop)'
+                      : `url(${blogConfig.ui.featuredImage.defaults[0]})`
                   }}
                 >
                   {/* Only add overlay and title for non-featured images */}
@@ -227,15 +238,15 @@ const BlogList: React.FC = () => {
                   )}
                   {!post.featuredImage && (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
-                      <h2 className="text-xl font-semibold text-white text-center">
+                      <h2 className={`text-xl font-semibold text-white text-center`}>
                         {post.title}
                       </h2>
                     </div>
                   )}
                 </div>
-                <div className="p-6">
+                <div className={themeConfig.layout.spacing.card}>
                   {(post.featuredImage || isYoutubeThumb) && (
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2 hover:text-blue-600">
+                    <h2 className={`text-xl font-semibold ${themeConfig.colors.secondary.textDark} mb-2 ${themeConfig.colors.primary.textHover}`}>
                       {post.title}
                     </h2>
                   )}
@@ -243,11 +254,7 @@ const BlogList: React.FC = () => {
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-2" />
                       <time dateTime={post.date}>
-                        {new Date(post.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
+                        {new Date(post.date).toLocaleDateString('en-US', blogConfig.posts.dateFormat.long)}
                       </time>
                     </div>
                     {post.author && (
@@ -258,10 +265,10 @@ const BlogList: React.FC = () => {
                     )}
                   </div>
                   {post.excerpt && (
-                    <div className="text-gray-600">
+                    <div className={themeConfig.colors.secondary.text}>
                       <ReactMarkdown>
-                        {post.excerpt.length > 120
-                          ? post.excerpt.substring(0, 120) + '...' 
+                        {post.excerpt.length > blogConfig.ui.preview.excerptLength
+                          ? post.excerpt.substring(0, blogConfig.ui.preview.excerptLength) + '...' 
                           : post.excerpt}
                       </ReactMarkdown>
                     </div>
