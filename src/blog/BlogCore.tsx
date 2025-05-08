@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
@@ -60,7 +60,7 @@ export const SearchBar: React.FC<{
 }) => {
   const [query, setQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(!compact);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -1080,30 +1080,31 @@ export const Sitemap: React.FC<{
 };
 
 /**
- * BlogPost Component
+ * BlogPostComponent Component
  * Displays a single blog post
  */
-export const BlogPost: React.FC = () => {
+export const BlogPostComponent: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
-  
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!slug) {
-      setError('Post not found');
+      setError('No slug provided');
       setLoading(false);
       return;
     }
-    
+
     getPostBySlug(slug)
       .then((fetchedPost) => {
         if (fetchedPost) {
           setPost(fetchedPost);
-          // Generate table of contents from headings
-          const headings = extractHeadings(fetchedPost.content);
-          setToc(headings);
+
+          // Force scroll to top when post changes
+          window.scrollTo(0, 0);
         } else {
           setError('Post not found');
         }
@@ -1115,148 +1116,165 @@ export const BlogPost: React.FC = () => {
         setLoading(false);
       });
   }, [slug]);
-  
-  // Function to extract headings from content for table of contents
-  const extractHeadings = (content: string): TocItem[] => {
-    const headingRegex = /^(#{2,4})\s+(.+)$/gm;
-    const headings: TocItem[] = [];
-    let match;
-    
-    while ((match = headingRegex.exec(content)) !== null) {
-      const level = match[1].length; // Number of # symbols
-      const text = match[2].trim();
-      const id = createSlug(text);
-      
-      headings.push({
-        id,
-        text,
-        level,
-      });
+
+  // Generate table of contents after post is loaded
+  useEffect(() => {
+    if (post && contentRef.current) {
+      generateTableOfContents();
     }
-    
-    return headings;
+  }, [post, contentRef.current]);
+
+  const generateTableOfContents = () => {
+    if (!contentRef.current) return;
+
+    const headings = contentRef.current.querySelectorAll('h2, h3, h4');
+    const tocItems: TocItem[] = [];
+
+    headings.forEach((heading, index) => {
+      const id = `heading-${index}`;
+      heading.id = id;
+
+      tocItems.push({
+        id,
+        text: heading.textContent || '',
+        level: parseInt(heading.tagName.substring(1))
+      });
+    });
+
+    setToc(tocItems);
   };
 
-  // Component to render table of contents
-  const TableOfContents: React.FC<{ items: TocItem[] }> = ({ items }) => {
-    if (items.length < 3) return null; // Only show TOC if there are enough headings
-    
+  // Custom component to handle YouTube embeds
+  const YouTubeEmbed = ({ src }: { src: string }) => {
     return (
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-2">Table of Contents</h2>
-        <ul className="space-y-1">
-          {items.map((item, index) => (
-            <li 
-              key={index} 
-              className={`${item.level === 2 ? 'ml-0' : item.level === 3 ? 'ml-4' : 'ml-8'}`}
-            >
-              <a 
-                href={`#${item.id}`}
-                className={`${themeConfig.components.link} text-sm`}
-              >
-                {item.text}
-              </a>
-            </li>
-          ))}
-        </ul>
+      <div className="aspect-w-16 my-6">
+        <iframe
+          src={`https://www.youtube.com/embed/${src}`}
+          title="YouTube video player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        ></iframe>
       </div>
     );
   };
 
-  // Component to render custom markdown with special handling for YouTube embeds
-  const CustomMarkdown: React.FC<{ content: string }> = ({ content }) => {
-    // Replace youtube:VIDEO_ID with an iframe embed
-    const processedContent = content.replace(/youtube:([a-zA-Z0-9_-]{11})/g, (match, videoId) => {
-      return `<div className="aspect-w-16">
-<iframe 
-  src="https://www.youtube.com/embed/${videoId}" 
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-  allowFullScreen
-  title="YouTube video"
-></iframe>
-</div>`;
-    });
-    
-    return (
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          h2: ({ node, ...props }) => {
-            const id = createSlug(props.children?.[0]?.toString() || '');
-            return <h2 id={id} className="text-2xl font-bold mt-8 mb-4" {...props} />;
-          },
-          h3: ({ node, ...props }) => {
-            const id = createSlug(props.children?.[0]?.toString() || '');
-            return <h3 id={id} className="text-xl font-semibold mt-6 mb-3" {...props} />;
-          },
-          h4: ({ node, ...props }) => {
-            const id = createSlug(props.children?.[0]?.toString() || '');
-            return <h4 id={id} className="text-lg font-medium mt-4 mb-2" {...props} />;
-          },
-          p: ({ node, ...props }) => {
-            return <p className="my-4" {...props} />;
-          },
-          a: ({ node, ...props }) => {
-            return <a className={themeConfig.components.link} target="_blank" rel="noopener noreferrer" {...props} />;
-          },
-          img: ({ node, ...props }) => {
-            return (
-              <img 
-                className="my-4 rounded-lg max-w-full h-auto mx-auto" 
-                loading="lazy"
-                {...props} 
-              />
-            );
-          },
-          code: ({ node, inline, className, children, ...props }) => {
-            return inline ? (
-              <code className="px-1 py-0.5 bg-gray-100 rounded text-sm" {...props}>
-                {children}
-              </code>
-            ) : (
-              <pre className="p-4 bg-gray-800 text-white rounded-lg overflow-x-auto">
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              </pre>
-            );
-          },
-          ul: ({ node, ...props }) => {
-            return <ul className="list-disc pl-6 my-4" {...props} />;
-          },
-          ol: ({ node, ...props }) => {
-            return <ol className="list-decimal pl-6 my-4" {...props} />;
-          },
-          li: ({ node, ...props }) => {
-            return <li className="my-1" {...props} />;
-          },
-          blockquote: ({ node, ...props }) => {
-            return (
-              <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4" {...props} />
-            );
-          },
-        }}
-      >
-        {processedContent}
-      </ReactMarkdown>
-    );
+  // Custom Markdown components
+  const markdownComponents = {
+    img: ({ src, alt }: { src?: string; alt?: string }) => {
+      if (!src) return null;
+      
+      return (
+        <img 
+          src={src} 
+          alt={alt || ''} 
+          className="my-4 rounded-lg mx-auto"
+          loading="lazy"
+        />
+      );
+    },
+    p: ({ children }: { children: React.ReactNode }) => {
+      if (React.isValidElement(children) && children.type === 'img') {
+        return children;
+      }
+      
+      // Handle YouTube embeds
+      if (typeof children === 'string' && children.startsWith('youtube:')) {
+        const videoId = children.replace('youtube:', '').trim();
+        return <YouTubeEmbed src={videoId} />;
+      }
+      
+      return <p className="my-4">{children}</p>;
+    },
+    h2: ({ children }: { children: React.ReactNode }) => (
+      <h2 className={`${themeConfig.typography.headings.h2} mt-8 mb-4 pt-2 ${themeConfig.colors.secondary.textDark}`}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children }: { children: React.ReactNode }) => (
+      <h3 className={`${themeConfig.typography.headings.h3} mt-6 mb-3 ${themeConfig.colors.secondary.textDark}`}>
+        {children}
+      </h3>
+    ),
+    a: ({ href, children }: { href?: string; children: React.ReactNode }) => {
+      if (!href) return children;
+      
+      const target = href.startsWith('http') ? '_blank' : undefined;
+      const rel = target ? 'noopener noreferrer' : undefined;
+      
+      return (
+        <a 
+          href={href} 
+          target={target} 
+          rel={rel}
+          className={themeConfig.components.link}
+        >
+          {children}
+        </a>
+      );
+    },
+    ul: ({ children }: { children: React.ReactNode }) => (
+      <ul className="list-disc pl-6 my-4 space-y-2">{children}</ul>
+    ),
+    ol: ({ children }: { children: React.ReactNode }) => (
+      <ol className="list-decimal pl-6 my-4 space-y-2">{children}</ol>
+    ),
+    li: ({ children }: { children: React.ReactNode }) => (
+      <li className="pl-1">{children}</li>
+    ),
+    blockquote: ({ children }: { children: React.ReactNode }) => (
+      <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4 text-gray-700">
+        {children}
+      </blockquote>
+    ),
+    code: ({ children, inline, className }: { children: React.ReactNode; inline?: boolean; className?: string }) => {
+      if (inline) {
+        return <code className="bg-gray-100 rounded px-1 py-0.5 text-sm">{children}</code>;
+      }
+      return (
+        <pre className="bg-gray-100 rounded-lg p-4 my-4 overflow-x-auto">
+          <code className={className}>{children}</code>
+        </pre>
+      );
+    },
+    table: ({ children }: { children: React.ReactNode }) => (
+      <div className="overflow-x-auto my-6">
+        <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children }: { children: React.ReactNode }) => (
+      <thead className="bg-gray-50">{children}</thead>
+    ),
+    tbody: ({ children }: { children: React.ReactNode }) => (
+      <tbody className="divide-y divide-gray-200">{children}</tbody>
+    ),
+    tr: ({ children }: { children: React.ReactNode }) => (
+      <tr>{children}</tr>
+    ),
+    th: ({ children }: { children: React.ReactNode }) => (
+      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        {children}
+      </th>
+    ),
+    td: ({ children }: { children: React.ReactNode }) => (
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {children}
+      </td>
+    ),
   };
 
   if (loading) {
     return (
       <div className={`${themeConfig.layout.container.regular} mx-auto ${themeConfig.layout.spacing.section}`}>
         <div className="animate-pulse">
-          <div className="h-12 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="flex gap-4 mb-8">
-            <div className="h-5 bg-gray-200 rounded w-24"></div>
-            <div className="h-5 bg-gray-200 rounded w-32"></div>
-          </div>
-          <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
+          <div className="h-10 bg-gray-200 rounded w-2/3 mb-6"></div>
+          <div className="h-5 bg-gray-200 rounded w-1/4 mb-12"></div>
+          <div className="h-60 bg-gray-200 rounded-lg mb-8"></div>
           <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-4 bg-gray-200 rounded w-full"></div>
+            ))}
           </div>
         </div>
       </div>
@@ -1267,181 +1285,192 @@ export const BlogPost: React.FC = () => {
     return (
       <div className={`${themeConfig.layout.container.regular} mx-auto ${themeConfig.layout.spacing.section}`}>
         <Helmet>
-          <title>Post Not Found - {siteConfig.title}</title>
+          <title>Error - {siteConfig.title}</title>
           <meta name="robots" content="noindex, follow" />
         </Helmet>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-800 mb-4">Post Not Found</h1>
-          <p className="text-red-700 mb-6">The blog post you're looking for could not be found.</p>
-          <Link
-            to={blogConfig.routes.blog}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h1 className="text-xl font-bold text-red-700 mb-4">
+            {error || 'Post not found'}
+          </h1>
+          <p className="text-red-600 mb-6">
+            Sorry, the blog post you're looking for could not be found.
+          </p>
+          <Link 
+            to={blogConfig.routes.blog} 
             className={themeConfig.components.button.primary}
           >
-            Return to Blog
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Blog
           </Link>
         </div>
       </div>
     );
   }
 
-  // Extract the first YouTube video ID for embedding
-  const youtubeMatch = post.content.match(YOUTUBE_REGEX);
-  const hasYoutubeVideo = youtubeMatch && youtubeMatch[1];
+  // Extract YouTube video ID if present
+  const videoMatch = post.content.match(/youtube:([a-zA-Z0-9_-]{11})/);
+  const videoId = videoMatch ? videoMatch[1] : null;
   
-  // Determine if the featured image is from YouTube
-  const isYoutubeThumb = post.featuredImage?.includes('img.youtube.com');
-  
+  // Determine if we should use video thumbnail as featured image
+  const useFeaturedImage = post.featuredImage && (!videoId || !post.featuredImage.includes(videoId));
+
   // Get meta description
   const metaDescription = post.excerpt || generateMetaDescription(post.content);
-
-  // Canonical URL
-  const canonicalUrl = `${getSiteUrl()}/${post.slug}/`;
 
   return (
     <div className={`${themeConfig.layout.container.regular} mx-auto ${themeConfig.layout.spacing.section}`}>
       <Helmet>
         <title>{post.title} - {siteConfig.title}</title>
         <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-        
-        {/* Open Graph Tags */}
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={canonicalUrl} />
-        {post.featuredImage && <meta property="og:image" content={post.featuredImage} />}
+        <meta property="og:url" content={`${getSiteUrl()}/${post.slug}/`} />
+        {post.featuredImage && (
+          <meta property="og:image" content={post.featuredImage} />
+        )}
         <meta property="article:published_time" content={post.date} />
-        
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={metaDescription} />
-        {post.featuredImage && <meta name="twitter:image" content={post.featuredImage} />}
+        {post.author && (
+          <meta property="article:author" content={post.author} />
+        )}
       </Helmet>
       
-      <article>
-        <header className="mb-8">
-          <div className="flex items-center space-x-2 mb-4">
-            <Link 
-              to={blogConfig.routes.blog} 
-              className="text-gray-500 hover:text-gray-700 flex items-center"
+      <div className="mb-8">
+        <Link 
+          to={blogConfig.routes.blog} 
+          className={`${themeConfig.colors.primary.text} ${themeConfig.colors.primary.textHover} inline-flex items-center`}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Blog
+        </Link>
+      </div>
+      
+      <article className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Featured image or video thumbnail */}
+        {useFeaturedImage && (
+          <div 
+            className={`${blogConfig.ui.featuredImage.height.blogPost} bg-cover bg-center`}
+            style={{ backgroundImage: `url(${post.featuredImage})` }}
+            aria-label="Featured image"
+            role="img"
+          />
+        )}
+        
+        {videoId && post.featuredImage?.includes(videoId) && (
+          <div 
+            className="youtube-featured"
+            style={{ backgroundImage: `url(${post.featuredImage})` }}
+          >
+            <a 
+              href={`https://www.youtube.com/watch?v=${videoId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute inset-0 flex items-center justify-center"
+              aria-label="Play YouTube video"
             >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              <span>Back to Blog</span>
-            </Link>
-          </div>
-          
-          <h1 className={`${themeConfig.typography.headings.h1} ${themeConfig.colors.secondary.textDark} mb-4`}>
-            {post.title}
-          </h1>
-          
-          <div className="flex flex-wrap gap-4 text-gray-500 mb-6">
-            <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-2" />
-              <time dateTime={post.date}>
-                {new Date(post.date).toLocaleDateString('en-US', blogConfig.posts.dateFormat.long)}
-              </time>
-            </div>
-            {post.author && (
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                <span>{post.author}</span>
+              <div className="h-16 w-24 bg-red-600 rounded-xl flex items-center justify-center">
+                <div className="w-0 h-0 border-t-8 border-b-8 border-t-transparent border-b-transparent border-l-16 border-l-white ml-2"></div>
               </div>
-            )}
+            </a>
           </div>
-          
-          {/* Featured image or video thumbnail */}
-          {(post.featuredImage || isYoutubeThumb) && (
-            <div 
-              className={`${
-                isYoutubeThumb 
-                  ? 'youtube-featured' 
-                  : `${blogConfig.ui.featuredImage.height.blogPost} bg-cover bg-center`
-              } rounded-lg overflow-hidden mb-8`}
-              style={{ 
-                backgroundImage: post.featuredImage 
-                  ? `url(${post.featuredImage})` 
-                  : undefined 
-              }}
-            >
-              {/* If it's a YouTube thumbnail, make it clickable to play the video */}
-              {isYoutubeThumb && hasYoutubeVideo && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="h-8 w-8 fill-current">
-                      <path d="M8 5v14l11-7z"></path>
-                    </svg>
-                  </div>
+        )}
+        
+        <div className="p-6 md:p-8">
+          <header className="mb-8">
+            <h1 className={`${themeConfig.typography.headings.h1} ${themeConfig.colors.secondary.textDark} mb-4`}>
+              {post.title}
+            </h1>
+            
+            <div className="flex flex-wrap gap-6 text-gray-500">
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                <time dateTime={post.date}>
+                  {new Date(post.date).toLocaleDateString('en-US', blogConfig.posts.dateFormat.long)}
+                </time>
+              </div>
+              {post.author && (
+                <div className="flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  <span>{post.author}</span>
                 </div>
               )}
             </div>
+          </header>
+          
+          {/* Table of Contents (shown if there are headings) */}
+          {toc.length > 0 && (
+            <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+              <h2 className="text-lg font-semibold mb-3">Table of Contents</h2>
+              <nav>
+                <ul className="space-y-1">
+                  {toc.map((item) => (
+                    <li 
+                      key={item.id} 
+                      className={`${item.level === 2 ? '' : 'ml-4'} ${item.level > 3 ? 'ml-8' : ''}`}
+                    >
+                      <a 
+                        href={`#${item.id}`}
+                        className={`${themeConfig.components.link} hover:underline text-sm inline-block py-1`}
+                      >
+                        {item.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
           )}
-        </header>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
-            {/* Table of Contents */}
-            <TableOfContents items={toc} />
-            
-            {/* Blog content */}
-            <div className="prose prose-lg max-w-none">
-              <CustomMarkdown content={post.content} />
-            </div>
-            
-            {/* Share buttons and tags */}
-            <div className="mt-12 pt-6 border-t border-gray-200">
-              <div className="flex flex-wrap justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Share this post</h3>
-                  <ShareButtons 
-                    url={canonicalUrl} 
-                    title={post.title}
-                    description={metaDescription}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Call-to-action block */}
-            <div className="mt-12">
-              <CTABlock />
-            </div>
-            
-            {/* Related posts section */}
-            <RelatedBlogPosts currentPostSlug={post.slug} />
+          
+          {/* Main content */}
+          <div 
+            ref={contentRef}
+            className="prose prose-lg max-w-none"
+          >
+            <ReactMarkdown
+              components={markdownComponents}
+              remarkPlugins={[remarkGfm]}
+            >
+              {post.content}
+            </ReactMarkdown>
           </div>
           
-          {/* Sidebar */}
-          <aside className="lg:col-span-1 space-y-8">
-            <div className="sticky top-8">
-              {/* About Author */}
-              <div className={`${themeConfig.components.card} p-6 mb-8`}>
-                <h3 className="text-lg font-semibold mb-3">About the Author</h3>
-                <div className="flex items-center mb-4">
-                  <div className={`h-12 w-12 rounded-full bg-gray-200 mr-3 flex items-center justify-center ${themeConfig.colors.primary.text}`}>
-                    <User className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{post.author || siteConfig.defaultAuthor}</h4>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  {siteConfig.description}
-                </p>
+          {/* Article footer */}
+          <footer className="mt-12 pt-6 border-t border-gray-100">
+            <div className="flex flex-wrap justify-between items-center">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Share this article</h3>
+                <ShareButtons 
+                  url={`${getSiteUrl()}/${post.slug}/`}
+                  title={post.title}
+                  description={metaDescription}
+                />
               </div>
-              
-              {/* Sidebar CTA */}
-              <CTABlock variant="sidebar" />
-              
-              {/* Other sidebar components */}
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-3">Explore</h3>
-                <Sitemap compact={true} />
+              <div className="mt-4 md:mt-0">
+                <Link 
+                  to={blogConfig.routes.blog}
+                  className={themeConfig.components.button.secondary}
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  More Articles
+                </Link>
               </div>
             </div>
-          </aside>
+          </footer>
         </div>
       </article>
+      
+      {/* CTA Block */}
+      <div className="mt-12">
+        <CTABlock />
+      </div>
+      
+      {/* Related Posts */}
+      <RelatedBlogPosts currentPostSlug={post.slug} />
     </div>
   );
 };
+
+// Import React hooks to avoid undefined errors
+import { useRef } from 'react';
+
+// Export BlogPostComponent directly
+export { BlogPostComponent };

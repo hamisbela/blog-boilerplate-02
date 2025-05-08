@@ -1,7 +1,7 @@
 // Export main blog components
 export {
   BlogList,
-  // BlogPost, <-- Removed to fix duplicate declaration
+  BlogPostComponent,
   BlogPreview,
   Sitemap,
   SearchBar,
