@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { BookOpen, Search } from 'lucide-react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import { BlogList, BlogPost, BlogPreview, Sitemap, SearchBar, ScrollToTop } from './blog/BlogCore';
+import { BlogList, BlogPreview, Sitemap, SearchBar, ScrollToTop } from './blog/BlogCore';
 import siteConfig, { getSiteUrl } from './config/site';
 import blogConfig from './config/blog.config';
 import themeConfig from './config/theme.config';

@@ -1081,6 +1081,3 @@ export const Sitemap: React.FC<{
 
 // Import React hooks to avoid undefined errors
 import { useRef } from 'react';
-
-// Export BlogPostComponent directly
-export { BlogPostComponent };
