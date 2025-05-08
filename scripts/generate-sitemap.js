@@ -40,12 +40,12 @@ try {
   }
 } catch (error) {
   // Try to get the site domain from environment variable
-  let siteDomain = process.env.VITE_SITE_DOMAIN || "toolcrunch.org";
+  let siteDomain = process.env.VITE_SITE_DOMAIN || "example.com";
   
   // Fallback in case the environment variable contains placeholder
   if (siteDomain.includes('${URL}')) {
-    console.warn('Warning: VITE_SITE_DOMAIN contains a placeholder ${URL}. Using hardcoded domain.');
-    siteDomain = "toolcrunch.org";
+    console.warn('Warning: VITE_SITE_DOMAIN contains a placeholder ${URL}. Using default domain.');
+    siteDomain = "example.com";
   }
   
   siteConfig = {
@@ -192,9 +192,9 @@ async function generateSitemap() {
     
     // Validate domain
     if (siteConfig.domain.includes('${URL}')) {
-      console.warn('Warning: domain contains a placeholder ${URL}. Using hardcoded domain.');
-      siteConfig.domain = "toolcrunch.org";
-      siteConfig.siteUrl = "https://toolcrunch.org";
+      console.warn('Warning: domain contains a placeholder ${URL}. Using default domain.');
+      siteConfig.domain = "example.com";
+      siteConfig.siteUrl = "https://example.com";
     }
     
     console.log(`Using site URL: ${siteConfig.siteUrl}`);
@@ -315,8 +315,8 @@ function generateRobotsTxt() {
     
     // Clean siteUrl if it contains a placeholder
     if (siteConfig.siteUrl.includes('${URL}')) {
-      console.warn('Warning: siteUrl contains a placeholder ${URL} in robots.txt. Using hardcoded URL.');
-      siteConfig.siteUrl = "https://toolcrunch.org";
+      console.warn('Warning: siteUrl contains a placeholder ${URL} in robots.txt. Using default URL.');
+      siteConfig.siteUrl = "https://example.com";
     }
     
     const content = `# robots.txt for ${siteConfig.siteUrl}

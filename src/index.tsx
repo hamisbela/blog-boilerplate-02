@@ -1,6 +1,7 @@
 // Export main blog components
 export {
   BlogList,
+  BlogPost,
   BlogPreview,
   Sitemap,
   SearchBar,

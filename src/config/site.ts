@@ -10,7 +10,7 @@ const siteConfig = {
   defaultAuthor: "Blog Author",
   
   // Domain configuration - single source of truth
-  domain: import.meta.env.VITE_SITE_DOMAIN || "aiimagecenter.com",
+  domain: import.meta.env.VITE_SITE_DOMAIN || "example.com",
   
   // Contact information
   contact: {
