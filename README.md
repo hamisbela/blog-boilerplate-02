@@ -30,6 +30,14 @@ npm run build
 npm run preview
 ```
 
+## Easy Customization
+
+The blog is designed for easy customization and reuse in other projects. Everything is organized into three main directories:
+
+1. **`src/config/`**: All customizable settings
+2. **`src/blog/`**: All blog-related components and functionality (easily portable)
+3. **`blog-content/`**: Where your Markdown blog posts go
+
 ## Customization
 
 ### Centralized Configuration
@@ -132,9 +140,34 @@ Your content goes here...
 
 To reuse these components in other projects, you can:
 
-1. Copy the entire `/src/components`, `/src/utils`, `/src/types`, and `/src/config` directories
-2. Import the components as needed from these files
-3. Customize the configuration files in `/src/config` for your specific needs
+1. Copy these directories to your new project:
+   - `/src/blog` (all core blog functionality)
+   - `/src/config` (all configuration files)
+
+2. In your main file, import the components you need:
+
+```typescript
+import { 
+  BlogList, 
+  BlogPost, 
+  BlogPreview 
+} from './blog/BlogCore';
+```
+
+3. Use the components in your application:
+
+```tsx
+<Routes>
+  <Route path="/blog" element={<BlogList />} />
+  <Route path="/post/:slug" element={<BlogPost />} />
+  <Route path="/" element={
+    <div>
+      <h2>Latest Posts</h2>
+      <BlogPreview />
+    </div>
+  } />
+</Routes>
+```
 
 This modular approach lets you quickly set up advanced blog functionality in any React project.
 
